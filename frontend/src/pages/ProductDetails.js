@@ -1,226 +1,233 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import productCategory from '../helpers/productsCategory'
-import axios from 'axios'
-import summaryApi from '../common'
-import displayAEDCurrency from '../helpers/displayCurrency'
-import addToCart from '../helpers/addToCart'
+import React, { useState, useEffect, useContext } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import axios from "axios"
+import summaryApi from "../common/index"
 import { toast } from 'react-toastify'
+import { FaStar, FaStarHalf } from "react-icons/fa";
+import displayAEDCurrency from '../helpers/displayCurrency'
+import ProductDetailsCard from '../components/ProductDetailsCard'
+import addToCart from '../helpers/addToCart'
+import Context from '../context'
+import { useSelector } from 'react-redux'
 
-const ProductCategory = () => {
-  const [data, setData] = useState([])
+const ProductDetails = () => {
+  const [data, setData] = useState({
+    productName: "",
+    brandName: "",
+    category: "",
+    productImage: [],
+    description: "",
+    price: "",
+    sellingPrice: "",
+    uploadedBy: "",
+  })
+
+  const { productId } = useParams()
+  const user = useSelector(state => state?.user?.user);
   const [loading, setLoading] = useState(true)
-  const loadingList = new Array(12).fill(false)
-  const navigate = useNavigate()
+  const [activeImage, setActiveImage] = useState()
+  const [imageZoomOpen, setImageZoomOpen] = useState(false)
+  const [imageZoom, setImageZoom] = useState({
+    x: 0,
+    y: 0,
+  })
+  const productImageLoading = new Array(4).fill(false)
 
-  const location = useLocation()
-  const urlSearchParams = new URLSearchParams(location.search);
-  const urlArrayCategoryList = urlSearchParams.getAll("category");
-
-  const urlObjectCategoryList = {}
-
-  urlArrayCategoryList.forEach(el => {
-    urlObjectCategoryList[el] = true
-  });
-
-  const [selectCategory, setSelectCategory] = useState(urlObjectCategoryList)
-  const [filterCategoryList, setFilterCategoryList] = useState([])
-
-  const [sortBy, setSortBy] = useState("")
-
-  const fetchProducts = async () => {
+  const fetchProduct = async () => {
     setLoading(true)
-    await axios.post(summaryApi.filterProduct.url,
-      { category: filterCategoryList },
-      { withCredentials: true },
+    await axios.post(summaryApi.productDetails.url,
+      { productId },
+      { withCredentials: true }
     ).then((response) => {
-      const responseData = response?.data;
+      const responseData = response?.data
 
       if (responseData?.success) {
-        console.log(responseData.data);
-        setData(responseData?.data || []);
-        return responseData?.data;
+        setData(responseData?.data)
+        setActiveImage(responseData?.data.productImage[0])
+        return responseData.data
       } else {
-        toast.error(responseData?.message);
+        toast.error(responseData?.message)
         return;
       }
     })
     setLoading(false)
   }
 
+  const { fetchAddToCartCount } = useContext(Context)
+
   const handleAddToCart = async (e, id) => {
-    await addToCart(e, id, 1);
-  }
-  const handleSelectCategory = async (e) => {
-    const { value, checked } = e.target
-    setSelectCategory((prev) => {
-      return {
-        ...prev,
-        [value]: checked,
-      }
-    })
+    await addToCart(e, id, 1)
+    fetchAddToCartCount()
   }
 
-  const handleSortBy = (e) => {
-    const { value } = e.target
+  const handleImageZoom = (e) => {
+    const { left, top, width, height } = e.target.getBoundingClientRect();
+    const x = (e.clientX - left) / width;
+    const y = (e.clientY - top) / height;
 
-    setSortBy(value)
-
-    if (value === "asc") {
-      setData(prev => prev.sort((a, b) => a.sellingPrice - b.sellingPrice))
-    } else if (value === "dsc") {
-      setData(prev => prev.sort((a, b) => b.sellingPrice - a.sellingPrice))
-    }
+    setImageZoom({
+      x,
+      y,
+    });
   }
 
   useEffect(() => {
-    fetchProducts()
-  }, [filterCategoryList])
-
-  useEffect(() => {
-    const arrayOfCategories = Object.keys(selectCategory).map(categoryKey => {
-      if (selectCategory[categoryKey]) {
-        return categoryKey
-      }
-      return null
-    }).filter(el => el)
-
-    setFilterCategoryList(arrayOfCategories)
-
-    const urlFormat = arrayOfCategories.map(el => {
-      if (arrayOfCategories.length === 1) {
-        return `category=${el}`
-      }
-      return `category=${el}&&`
-    })
-
-    navigate(`/product-category?${urlFormat.join("")}`)
-  }, [selectCategory])
-
-  useEffect(() => {
-
-  }, [sortBy])
+    fetchProduct()
+  }, [productId, user])
 
   return (
-    <>
-      <div className='container mx-auto mr-24 mt-1 p-4'>
-        {/* desktop */}
-        <div className='grid grid-cols-[150px,1fr] md:grid-cols-[250px,1fr] select-none'>
-          {/* left side */}
-          <div className='bg-white p-2 min-h-[calc(100vh-190px)] max-h-[calc(100vh-190px)] overflow-y-scroll scrollbar-none shadow-2xl rounded-2xl sticky top-24'>
-            {/* sort by */}
-            <div className=''>
-              <h3 className='text-xl uppercase font-medium text-slate-500 border-b-2 pb-1 border-slate-300'>SORT BY</h3>
+    <div className='container mx-auto p-4'>
+      {
+        loading ? (
+          <div className='flex w-full min-h-[550px] gap-4 flex-col lg:flex-row ' >
 
-              <form className='text-lg flex flex-col gap-2 py-2'>
-                <div className='flex gap-3'>
-                  <input type='radio' name="sortBy" checked={sortBy === "dsc"} value={"dsc"} onChange={handleSortBy} />
-                  <label>Price - High To Low</label>
-                </div>
-
-                <div className='flex gap-3'>
-                  <input type='radio' name="sortBy" checked={sortBy === "asc"} value={"asc"} onChange={handleSortBy} />
-                  <label>Price - Low to High</label>
-                </div>
-              </form>
-
-            </div>
-
-            {/* filter by */}
-            <div className='mt-1'>
-              <h3 className='text-xl uppercase font-medium text-slate-500 border-b-2 pb-1 border-slate-300'>CATEGORY</h3>
-
-              <form className='text-lg flex flex-col gap-2 py-2'>
-                {productCategory.map((category, index) => {
+            <div className='h-full'>
+              <ul>
+                {productImageLoading.map((_, index) => {
                   return (
-                    <div key={category.id} className='flex gap-3'>
-                      <input
-                        type='checkBox'
-                        id={category?.id}
-                        name={"category"}
-                        checked={selectCategory[category?.value]}
-                        value={category?.value}
-                        onChange={handleSelectCategory}
-                      />
-                      <label htmlFor={category.value}>{category.label}</label>
-                    </div>
+                    <li key={index} className='animate-pulse w-24 h-20 lg:w-32 lg:h-28 mt-4 bg-slate-200 flex justify-center items-center'>
+                      <div className='w-20 h-16 lg:w-28 lg:h-24 bg-slate-300 rounded'></div>
+                    </li>
                   )
                 })}
-              </form>
+              </ul>
+            </div>
+
+            <div className='min-w-[350px] max-w-[350px]  h-[350px] lg:min-w-[550px] lg:max-w-[550px] lg:h-[550px] rounded shadow bg-slate-200 flex justify-center items-center animate-pulse'>
+              <div className='min-w-[350px] max-w-[250px]  h-[250px] lg:min-w-[450px] lg:max-w-[450px] lg:h-[450px] rounded shadow bg-slate-300 flex justify-center items-center'></div>
+            </div>
+
+            <div className='min-w-[450px]'>
+
+              <div className='animate-pulse'>
+                <p className='bg-slate-300 w-full h-8 rounded-full flex justify-center items-center'></p>
+                <div className='bg-slate-300 w-full h-8 mt-2'></div>
+                <p className='bg-slate-300 w-full h-8 mt-2'></p>
+              </div>
+
+              <div className='bg-slate-300 w-full h-8 mt-2 animate-pulse'></div>
+              <div className='bg-slate-300 h-8 mt-2 animate-pulse flex gap-3'></div>
+
+              <div className='flex justify-center items-center mt-4'>
+                <button className='bg-slate-300 animate-pulse flex justify-center items-center w-32 h-10 rounded-md'></button>
+                <button className='animate-pulse ml-5 mr-3 w-32 h-10 bg-slate-300 rounded-md'></button>
+              </div>
+
+              <div className='animate-pulse'>
+                <div className='bg-slate-300 w-full h-8 mt-4'></div>
+                <div className='bg-slate-300 w-full h-8 mt-4' ></div>
+              </div>
 
             </div>
           </div>
+        ) : (
+          <div className='flex w-full min-h-[550px] gap-8 flex-col lg:flex-row ' >
 
-          {/* right side */}
-          <div className='p-2'>
-            <h1 className='ml-8 text-2xl font-semibold py-4'>Results: {data.length}</h1>
-
-            <div className='flex flex-wrap justify-between gap-2'>
-              {loading ? (
-                loadingList.map((_, index) => (
-                  <div key={index} className='flex w-full h-44 min-w-96 max-w-96 rounded-lg bg-white shadow-md overflow-hidden animate-pulse'>
-                    <div className='bg-slate-200 h-full w-44 flex justify-center items-center'>
-                      <div className='w-32 h-32 bg-slate-300 rounded'></div>
-                    </div>
-
-                    <div className='p-4 flex flex-col  justify-between flex-grow'>
-                      <div>
-                        <div className='h-6 w-3/4 bg-slate-300 mb-2 rounded'></div>
-                        <div className='h-4 w-1/2 bg-slate-300 rounded'></div>
-                      </div>
-
-                      <div>
-                        <div className='flex gap-3 mb-2'>
-                          <div className='h-5 w-20 bg-slate-300 rounded'></div>
-                          <div className='h-5 w-16 bg-slate-300 rounded'></div>
-                        </div>
-                      </div>
-
-                      <div className='h-8 w-28 bg-slate-300 rounded-full'></div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                data.map((product) => {
+            <div className='h-full'>
+              <ul className='flex flex-row lg:flex-col'>
+                {data?.productImage.map((image, index) => {
                   return (
-                    <Link
-                      key={product?._id}
-                      to={`/product/${product?._id}`}
-                      className='min-w-[370px] max-w-[370px] h-[400px] rounded-xl bg-white shadow-md mt-5 ml-9'
-                    >
-                      <div className='h-3/5 bg-slate-200 p-3 overflow-hidden cursor-pointer flex justify-center items-center rounded-xl shadow-xl'>
-                        <img src={product?.productImage[0]} alt={product?.productName} className='h-full w-full object-scale-down hover:scale-110 transition-all duration-300 mix-blend-multiply' />
-                      </div>
-
-                      <div className='h-1/4 p-4 flex flex-col justify-between'>
-                        <div>
-                          <h3 className='text-lg font-semibold truncate'>{product?.productName}</h3>
-                          <p className='text-sm text-slate-500 capitalize truncate'>{product?.category}</p>
-                        </div>
-                        <div>
-                          <div className='flex gap-3 items-center mt-2'>
-                            <p className='text-lg font-medium text-red-600'>{displayAEDCurrency(product?.sellingPrice)}</p>
-                            <p className='text-lg text-slate-500 line-through'>{displayAEDCurrency(product?.price)}</p>
-                          </div>
-                          <button
-                            className='bg-cyan-600 w-full hover:bg-cyan-700 mt-1 flex items-center justify-center transition-all duration-300 text-white px-4 py-2 rounded-full'
-                            onClick={(e) => handleAddToCart(e, product?._id)}
-                          >
-                            Add to Cart
-                          </button>
-                        </div>
-                      </div>
-                    </Link>
+                    <li key={index}
+                      onMouseEnter={() => { setActiveImage(image) }}
+                      className='w-24 h-20 lg:w-32 lg:h-28 mt-4 bg-slate-200 rounded shadow cursor-pointer'>
+                      <img src={image} alt={index} className='w-full h-full object-scale-down mix-blend-multiply' />
+                    </li>
                   )
-                })
-              )}
+                })}
+              </ul>
+            </div>
+
+            <div className='p-2 relative min-w-[350px] max-w-[350px] h-[350px] lg:min-w-[550px] lg:max-w-[550px] lg:h-[550px] rounded shadow bg-slate-200 flex justify-center items-center'>
+              <img src={activeImage} alt={productId}
+                onMouseEnter={() => { setImageZoomOpen(true) }}
+                onMouseMove={handleImageZoom}
+                onMouseLeave={() => setImageZoomOpen(false)}
+                className='w-full h-full object-scale-down mix-blend-multiply'
+              />
+
+              {imageZoomOpen &&
+                <div className='lg:block w-full scale-125 h-full absolute left-[650px] min-w-[550px] min-h-[550px] max-w-[550px] max-h-[550px] top-0 p-1 bg-slate-200 hidden overflow-hidden'>
+                  <div
+                    className='w-full h-full  p-3 max-w-[550px] max-h-[550px] min-w-[550px] min-h-[550px] object-scale-down mix-blend-multiply'
+                    style={{
+                      backgroundImage: `url(${activeImage})`,
+                      backgroundPosition: `${imageZoom.x * 125}% ${imageZoom.y * 125}%`,
+                      backgroundRepeat: "no-repeat",
+                      backgroundSize: "auto", // Set to auto to maintain the original size while allowing zoom
+                    }}
+                  ></div>
+                </div>
+              }
+            </div>
+
+            <div>
+
+              <div>
+                <p className='bg-red-200 text-red-400 rounded-full flex justify-center items-center w-fit px-1.5 py-1'>
+                  {data?.productName.split(" ")[0]}
+                </p>
+
+                <h1 className='font-semibold text-4xl mt-2'>
+                  {data?.description}
+                </h1>
+
+                <p className='text-gray-400 mt-2'>
+                  {`${data.category.charAt(0).toUpperCase()}${data.category.slice(1)}`}
+                </p>
+              </div>
+
+              <div className='text-lg mt-3 flex gap-1'>
+                <FaStar className='fill-red-500' />
+                <FaStar className='fill-red-500' />
+                <FaStar className='fill-red-500' />
+                <FaStar className='fill-red-500' />
+
+                <FaStarHalf className='fill-red-500' />
+              </div>
+
+              <div className='flex gap-3 mt-1 text-3xl'>
+
+                <div className='text-red-500 font-semibold mt-2'>
+                  {displayAEDCurrency(data?.sellingPrice)}
+                </div>
+
+                <div className='text-gray-400 font-semibold mt-2 line-through'>
+                  {displayAEDCurrency(data?.price)}
+                </div>
+
+              </div>
+
+              <div className='flex justify-start items-start mt-4' onClick={(e) => handleAddToCart(e, productId)} >
+                {user?._id ? (
+                  <Link to={"/cart"} className='flex justify-center items-center w-32 h-10 bg-transparent text-cyan-700 hover:bg-cyan-500 hover:border-none hover:text-white font-semibold text-lg border-2 border-cyan-600 rounded-md'>
+                    Buy
+                  </Link>
+                ) : (
+                  <Link to={"/login"} className='flex justify-center items-center w-32 h-10 bg-transparent text-cyan-700 hover:bg-cyan-500 hover:border-none hover:text-white font-semibold text-lg border-2 border-cyan-600 rounded-md'>
+                    Buy
+                  </Link>
+                )}
+                <button className='ml-5 mr-3 w-32 h-10 bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-lg rounded-md'>
+                  Add To Cart
+                </button>
+              </div>
+
+              <div className='mt-4'>
+                <div>Description:</div>
+                <div>{data?.description}</div>
+              </div>
+
             </div>
           </div>
-        </div>
-      </div>
-    </>
+        )
+      }
+
+      <ProductDetailsCard category={data?.category} heading={"Recommended Product"} />
+
+    </div >
+
   )
 }
 
-export default ProductCategory
+export default ProductDetails
