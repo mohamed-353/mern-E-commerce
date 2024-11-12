@@ -1,4 +1,5 @@
-import React, { useContext, useEffect, useState, useCallback } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useContext, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import summaryApi from '../common';
@@ -19,7 +20,7 @@ const SearchProduct = () => {
 
   console.log("query", query.search);
 
-  const fetchProducts = useCallback(async () => {
+  const fetchProducts = async () => {
     await axios.get(`${summaryApi.searchProduct.url}${query.search}`, {
       params: { page },
       withCredentials: true,
@@ -37,7 +38,7 @@ const SearchProduct = () => {
     });
     setLoading(false)
     console.log(data);
-  }, [query.search, page]);
+  };
 
   const { fetchAddToCartCount } = useContext(Context)
 
@@ -48,7 +49,7 @@ const SearchProduct = () => {
 
   useEffect(() => {
     fetchProducts()
-  }, [fetchProducts]);
+  }, [query.search, page]);
 
   const handelChangePage = (pageNumber) => {
     setPage(pageNumber);
