@@ -46,7 +46,7 @@ function App() {
   useEffect(() => {
     fetchUserDetails();
     fetchAddToCartCount();
-  }, []);
+  });
 
   return (
     <Context.Provider value={{ fetchUserDetails, fetchAddToCartCount, cartProductCount }}>

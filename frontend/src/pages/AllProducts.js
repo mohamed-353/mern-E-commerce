@@ -21,7 +21,7 @@ function AllProducts() {
 
   useEffect(() => {
     fetchAllProducts();
-  }, []);
+  });
 
   return (
     <>

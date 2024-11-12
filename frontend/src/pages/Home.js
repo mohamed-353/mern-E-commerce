@@ -9,7 +9,7 @@ import ToTop from '../components/ToTop'
 const Home = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth', duration: 1000 });
-  }, []);
+  });
 
   return (
     <div>

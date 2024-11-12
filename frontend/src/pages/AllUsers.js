@@ -53,7 +53,7 @@ function AllUsers() {
 
   useEffect(() => {
     fetchAllUsers();
-  }, [])
+  })
 
   return (
     <>

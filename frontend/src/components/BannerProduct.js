@@ -38,7 +38,7 @@ const BannerProduct = () => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
     }, 10000);
     return () => clearInterval(timer);
-  }, []);
+  });
 
   const handlePrev = () => {
     setCurrentIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);

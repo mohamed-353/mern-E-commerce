@@ -116,7 +116,7 @@ const Cart = () => {
   useEffect(() => {
     fetchCartProducts();
     fetchGetQuantity();
-  }, []);
+  });
 
   useEffect(() => {
     fetchCartProducts();
