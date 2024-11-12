@@ -24,7 +24,7 @@ const BannerProduct = () => {
   const handleOpenProduct = async () => {
 
     const productIds = [
-      "670e894f3badcd3a9b0fa6b1",
+      "680e894f3badcd3a9b0fa6b1",
       "6718b01381e3ca49e756bf72",
       "670957e06012371abf8bcf68",
       "670955e46012371abf8bcf58",
