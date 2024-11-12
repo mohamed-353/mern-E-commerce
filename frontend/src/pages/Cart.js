@@ -1,5 +1,5 @@
 import axios from 'axios'
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState, useCallback } from 'react'
 import summaryApi from '../common'
 import { toast } from 'react-toastify'
 import displayAEDCurrency from '../helpers/displayCurrency'
@@ -16,42 +16,35 @@ const Cart = () => {
   const [refresh, setRefresh] = useState(false);
   const context = useContext(Context)
 
-  const fetchCartProducts = async () => {
+  const fetchCartProducts = useCallback(async () => {
     setLoading(true);
-    await axios.get(summaryApi.cartProducts.url,
+    const response = await axios.get(summaryApi.cartProducts.url,
       { withCredentials: true },
-    ).then((response) => {
-      const responseData = response?.data;
+    );
+    const responseData = response?.data;
 
-      if (responseData?.success) {
-        console.log(responseData?.data);
-        setProducts(responseData?.data);
-        return responseData?.data;
-      } else {
-        toast.error(responseData?.message);
-        return;
-      };
-    });
+    if (responseData?.success) {
+      console.log(responseData?.data);
+      setProducts(responseData?.data);
+    } else {
+      toast.error(responseData?.message);
+    }
     setLoading(false);
-  };
+  }, []);
 
-  const fetchGetQuantity = async () => {
-    await axios.get(summaryApi.getQuantity.url,
+  const fetchGetQuantity = useCallback(async () => {
+    const response = await axios.get(summaryApi.getQuantity.url,
       { withCredentials: true },
-    ).then((response) => {
-      const responseData = response?.data;
+    );
+    const responseData = response?.data;
 
-      if (responseData?.success) {
-        console.log(responseData?.data);
-        setQuantity(responseData?.data);
-        setLoading(false);
-        return responseData?.data;
-      } else {
-        toast.error(responseData?.message);
-        return;
-      };
-    });
-  };
+    if (responseData?.success) {
+      console.log(responseData?.data);
+      setQuantity(responseData?.data);
+    } else {
+      toast.error(responseData?.message);
+    }
+  }, []);
 
   const fetchChangeQuantity = async () => {
     await axios.post(summaryApi.changeQuantity.url,
@@ -116,7 +109,7 @@ const Cart = () => {
   useEffect(() => {
     fetchCartProducts();
     fetchGetQuantity();
-  });
+  }, [fetchCartProducts, fetchGetQuantity]);
 
   useEffect(() => {
     fetchCartProducts();
@@ -125,8 +118,8 @@ const Cart = () => {
 
   useEffect(() => {
     handleCountQuantity();
-    handleCountPrice()
-  }, [quantity]);
+    handleCountPrice();
+  }, [quantity, products]);
 
   return (
     <div className='container mx-auto m-9'>

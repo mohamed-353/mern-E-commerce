@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext, useCallback } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import axios from "axios"
 import summaryApi from "../common/index"
@@ -33,7 +33,7 @@ const ProductDetails = () => {
   })
   const productImageLoading = new Array(4).fill(false)
 
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     setLoading(true)
     await axios.post(summaryApi.productDetails.url,
       { productId },
@@ -51,7 +51,7 @@ const ProductDetails = () => {
       }
     })
     setLoading(false)
-  }
+  }, [productId, user])
 
   const { fetchAddToCartCount } = useContext(Context)
 
@@ -73,7 +73,7 @@ const ProductDetails = () => {
 
   useEffect(() => {
     fetchProduct()
-  }, [productId, user])
+  }, [fetchProduct])
 
   return (
     <div className='container mx-auto p-4'>
