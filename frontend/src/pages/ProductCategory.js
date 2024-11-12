@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react'
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import productCategory from '../helpers/productsCategory'
 import axios from 'axios'
@@ -73,22 +74,29 @@ const ProductCategory = () => {
     }
   }
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const response = await axios.get('/api/categories');
-      setFilterCategoryList(response.data);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  }, []); // No dependencies, stable function
-
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]); // Safe to include
-
   useEffect(() => {
     fetchProducts()
   }, [filterCategoryList])
+
+  useEffect(() => {
+    const arrayOfCategories = Object.keys(selectCategory).map(categoryKey => {
+      if (selectCategory[categoryKey]) {
+        return categoryKey
+      }
+      return null
+    }).filter(el => el)
+
+    setFilterCategoryList(arrayOfCategories)
+
+    const urlFormat = arrayOfCategories.map(el => {
+      if (arrayOfCategories.length === 1) {
+        return `category=${el}`
+      }
+      return `category=${el}&&`
+    })
+
+    navigate(`/product-category?${urlFormat.join("")}`)
+  }, [selectCategory])
 
   useEffect(() => {
 
