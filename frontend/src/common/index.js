@@ -1,4 +1,4 @@
-const backendDomain = "http://localhost:8080"
+const backendDomain = "https://backend-mmn2-5hoj3iaqq-mohameds-projects-d65f26cc.vercel.app"
 
 const summaryApi = {
   signUp: {
